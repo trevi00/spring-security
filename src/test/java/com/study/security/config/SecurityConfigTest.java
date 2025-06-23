@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,10 +38,14 @@ class SecurityConfigTest {
     @Test
     @DisplayName("인증 API는 인증 없이 접근 가능")
     void authEndpoints_NoAuth_Success() throws Exception {
-        mockMvc.perform(post("/api/auth/signin"))
-                .andExpect(status().isBadRequest()); // Body가 없어서 400, 하지만 401은 아님
+        mockMvc.perform(post("/api/auth/signin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest()); // Body가 잘못되어서 400, 하지만 401은 아님
 
-        mockMvc.perform(post("/api/auth/signup"))
-                .andExpect(status().isBadRequest()); // Body가 없어서 400, 하지만 401은 아님
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest()); // Body가 잘못되어서 400, 하지만 401은 아님
     }
 }

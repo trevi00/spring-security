@@ -1,13 +1,14 @@
-package com.main.resources;
+package com.study.security;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class SpringSecurityDemoApplicationTests {
 
     @Test
     void contextLoads() {
     }
-
 }

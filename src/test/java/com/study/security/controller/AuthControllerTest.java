@@ -98,7 +98,7 @@ class AuthControllerTest {
         SignUpRequest request = new SignUpRequest();
         request.setUsername("testuser");
         request.setEmail("test@example.com");
-        request.setPassword("weak");
+        request.setPassword("weak"); // 패턴에 맞지 않는 약한 비밀번호
 
         // when & then
         mockMvc.perform(post("/api/auth/signup")
@@ -106,7 +106,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors", hasSize(greaterThan(0))));
+                .andExpect(jsonPath("$.errors").exists())
+                .andExpect(jsonPath("$.errors.password").exists());
     }
 
     @Test

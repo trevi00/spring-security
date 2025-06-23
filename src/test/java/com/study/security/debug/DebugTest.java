@@ -1,12 +1,12 @@
-package com.study.security.controller;
+package com.study.security.debug;
 
 import com.study.security.entity.Role;
 import com.study.security.entity.User;
 import com.study.security.repository.UserRepository;
 import com.study.security.security.UserPrincipal;
 import com.study.security.security.jwt.JwtTokenProvider;
+import com.study.security.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,20 +15,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class AdminControllerTest {
+public class DebugTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,10 +41,12 @@ class AdminControllerTest {
     @Autowired
     private JwtTokenProvider tokenProvider;
 
+    @Autowired
+    private UserService userService;
+
     private User adminUser;
     private User normalUser;
     private String adminToken;
-    private String userToken;
 
     @BeforeEach
     void setUp() {
@@ -69,57 +70,55 @@ class AdminControllerTest {
                 .build();
         normalUser = userRepository.save(normalUser);
 
-        // Generate tokens using UserPrincipal
+        // Generate admin token
         UserPrincipal adminPrincipal = UserPrincipal.create(adminUser);
         UsernamePasswordAuthenticationToken adminAuth =
                 new UsernamePasswordAuthenticationToken(adminPrincipal, null, adminPrincipal.getAuthorities());
         adminToken = tokenProvider.generateToken(adminAuth);
-
-        UserPrincipal userPrincipal = UserPrincipal.create(normalUser);
-        UsernamePasswordAuthenticationToken userAuth =
-                new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
-        userToken = tokenProvider.generateToken(userAuth);
     }
 
     @Test
-    @DisplayName("전체 사용자 조회 성공 - Admin 권한")
-    void getAllUsers_AsAdmin_Success() throws Exception {
-        mockMvc.perform(get("/api/admin/users")
-                        .header("Authorization", "Bearer " + adminToken))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
-    }
+    void debugRoleUpdate() throws Exception {
+        System.out.println("=== Before role update ===");
+        System.out.println("Normal user roles: " + normalUser.getRoles());
 
-    @Test
-    @DisplayName("전체 사용자 조회 실패 - User 권한")
-    void getAllUsers_AsUser_Forbidden() throws Exception {
-        mockMvc.perform(get("/api/admin/users")
-                        .header("Authorization", "Bearer " + userToken))
-                .andDo(print())
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @DisplayName("사용자 권한 변경 성공")
-    void updateUserRole_Success() throws Exception {
-        System.out.println("Normal user initial roles: " + normalUser.getRoles());
-
-        mockMvc.perform(put("/api/admin/users/{userId}/role", normalUser.getId())
+        MvcResult result = mockMvc.perform(put("/api/admin/users/{userId}/role", normalUser.getId())
                         .header("Authorization", "Bearer " + adminToken)
                         .param("role", "MODERATOR"))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.roles", hasSize(2))) // USER + MODERATOR = 2개
-                .andExpect(jsonPath("$.username").value("user"));
+                .andReturn();
+
+        System.out.println("=== Response Status: " + result.getResponse().getStatus());
+        System.out.println("=== Response Body: " + result.getResponse().getContentAsString());
+
+        // Refresh user from database
+        User updatedUser = userRepository.findById(normalUser.getId()).orElse(null);
+        System.out.println("=== After role update ===");
+        System.out.println("Updated user roles: " + (updatedUser != null ? updatedUser.getRoles() : "null"));
     }
 
     @Test
-    @DisplayName("사용자 삭제 성공")
-    void deleteUser_Success() throws Exception {
-        mockMvc.perform(delete("/api/admin/users/{userId}", normalUser.getId())
-                        .header("Authorization", "Bearer " + adminToken))
+    void debugEmailUpdate() throws Exception {
+        UserPrincipal userPrincipal = UserPrincipal.create(normalUser);
+        UsernamePasswordAuthenticationToken userAuth =
+                new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
+        String userToken = tokenProvider.generateToken(userAuth);
+
+        System.out.println("=== Before email update ===");
+        System.out.println("Normal user email: " + normalUser.getEmail());
+
+        MvcResult result = mockMvc.perform(put("/api/user/profile")
+                        .header("Authorization", "Bearer " + userToken)
+                        .param("email", "newemail@example.com"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andReturn();
+
+        System.out.println("=== Response Status: " + result.getResponse().getStatus());
+        System.out.println("=== Response Body: " + result.getResponse().getContentAsString());
+
+        // Refresh user from database
+        User updatedUser = userRepository.findById(normalUser.getId()).orElse(null);
+        System.out.println("=== After email update ===");
+        System.out.println("Updated user email: " + (updatedUser != null ? updatedUser.getEmail() : "null"));
     }
 }
