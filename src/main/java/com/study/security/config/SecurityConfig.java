@@ -68,9 +68,9 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 엔드포인트 권한 설정
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/user/**").hasRole("USER")
                         .requestMatchers("/api/moderator/**").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -48,12 +49,15 @@ class UserControllerTest {
     void setUp() {
         userRepository.deleteAll();
 
-        // Create test user
+        // Create test user with mutable Set
+        Set<Role> userRoles = new HashSet<>();
+        userRoles.add(Role.USER);
+
         testUser = User.builder()
                 .username("testuser")
                 .email("test@example.com")
                 .password(passwordEncoder.encode("Test@1234"))
-                .roles(Set.of(Role.USER))
+                .roles(userRoles)
                 .build();
         testUser = userRepository.save(testUser);
 

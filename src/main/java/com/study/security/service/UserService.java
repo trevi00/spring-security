@@ -11,7 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,8 +44,17 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 기존 역할을 유지하면서 새 역할 추가
-        user.addRole(role);
+        // 기존 역할이 null이거나 불변 Set인 경우를 처리
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
+        } else {
+            // 기존 Set이 불변인 경우 새로운 가변 Set으로 변경
+            Set<Role> mutableRoles = new HashSet<>(user.getRoles());
+            user.setRoles(mutableRoles);
+        }
+
+        // 새 역할 추가
+        user.getRoles().add(role);
         User updatedUser = userRepository.save(user);
 
         log.info("User {} role updated to include {}", user.getUsername(), role);

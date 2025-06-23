@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -51,21 +52,27 @@ class AdminControllerTest {
     void setUp() {
         userRepository.deleteAll();
 
-        // Create admin user
+        // Create admin user with mutable Set
+        Set<Role> adminRoles = new HashSet<>();
+        adminRoles.add(Role.ADMIN);
+
         adminUser = User.builder()
                 .username("admin")
                 .email("admin@example.com")
                 .password(passwordEncoder.encode("Admin@1234"))
-                .roles(Set.of(Role.ADMIN))
+                .roles(adminRoles)
                 .build();
         adminUser = userRepository.save(adminUser);
 
-        // Create normal user
+        // Create normal user with mutable Set
+        Set<Role> userRoles = new HashSet<>();
+        userRoles.add(Role.USER);
+
         normalUser = User.builder()
                 .username("user")
                 .email("user@example.com")
                 .password(passwordEncoder.encode("User@1234"))
-                .roles(Set.of(Role.USER))
+                .roles(userRoles)
                 .build();
         normalUser = userRepository.save(normalUser);
 

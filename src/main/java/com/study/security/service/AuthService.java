@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,12 +46,15 @@ public class AuthService {
             throw new RuntimeException("Email is already in use!");
         }
 
-        // Create new user
+        // Create new user with mutable Set
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.USER);
+
         User user = User.builder()
                 .username(signUpRequest.getUsername())
                 .email(signUpRequest.getEmail())
                 .password(passwordEncoder.encode(signUpRequest.getPassword()))
-                .roles(Set.of(Role.USER))
+                .roles(roles)
                 .enabled(true)
                 .accountNonExpired(true)
                 .accountNonLocked(true)
